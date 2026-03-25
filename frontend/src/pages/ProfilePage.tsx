@@ -10,7 +10,7 @@ const PUSH_KEY = 'campus_pref_push'
 const DARK_KEY = 'campus_pref_dark'
 
 export function ProfilePage() {
-  const { user, loading } = useAuth()
+  const { user, loading, logout } = useAuth()
   const navigate = useNavigate()
   const [gpa, setGpa] = useState<number | null>(null)
   const [pushOn, setPushOn] = useState(() => localStorage.getItem(PUSH_KEY) !== '0')
@@ -318,6 +318,21 @@ export function ProfilePage() {
                 </button>
               </div>
             </form>
+
+            <div style={{ marginTop: 24, borderTop: '1px solid var(--campus-border)', paddingTop: 16 }}>
+              <button 
+                type="button" 
+                className="campus-btn-secondary" 
+                style={{ width: '100%', color: 'var(--campus-error)', borderColor: 'var(--campus-error)', background: 'transparent' }} 
+                onClick={async () => {
+                  setAccountOpen(false);
+                  await logout();
+                  navigate('/login');
+                }}
+              >
+                Log Out
+              </button>
+            </div>
           </div>
         </div>
       ) : null}

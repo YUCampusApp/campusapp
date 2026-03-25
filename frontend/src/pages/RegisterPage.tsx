@@ -26,6 +26,7 @@ async function registerStudent(payload: {
 
 export function RegisterPage() {
   const navigate = useNavigate()
+  const [userType, setUserType] = useState<'student' | 'provider'>('student')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showPw, setShowPw] = useState(false)
@@ -42,7 +43,9 @@ export function RegisterPage() {
     setSubmitting(true)
     setError(null)
     try {
-      await registerStudent({ name, email, password, studentNo, department, classYear })
+      const finalStudentNo = userType === 'provider' ? email : studentNo
+      const finalClassYear = userType === 'provider' ? 0 : classYear
+      await registerStudent({ name, email, password, studentNo: finalStudentNo, department, classYear: finalClassYear })
       navigate('/login')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Register failed')
@@ -65,18 +68,44 @@ export function RegisterPage() {
 
         {error ? <div className="campus-error">{error}</div> : null}
 
+        <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+          <button 
+            type="button"
+            className={userType === 'student' ? 'campus-btn-primary' : 'campus-btn-secondary'} 
+            style={{ flex: 1, padding: '8px 4px', fontSize: 13 }}
+            onClick={() => setUserType('student')}
+          >
+            Student & Instructor
+          </button>
+          <button 
+            type="button"
+            className={userType === 'provider' ? 'campus-btn-primary' : 'campus-btn-secondary'} 
+            style={{ flex: 1, padding: '8px 4px', fontSize: 13 }}
+            onClick={() => {
+              setUserType('provider')
+              setDepartment('ServiceProvider_Cafeteria')
+            }}
+          >
+            Service Provider
+          </button>
+        </div>
+
         <form onSubmit={onSubmit}>
           <label className="campus-field-label">Full Name</label>
           <div className="campus-input-row" style={{ marginBottom: 14 }}>
             <User className="campus-input-icon" size={20} />
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter your name" required />
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter your full name" required />
           </div>
 
-          <label className="campus-field-label">Student ID</label>
-          <div className="campus-input-row" style={{ marginBottom: 14 }}>
-            <GraduationCap className="campus-input-icon" size={20} />
-            <input value={studentNo} onChange={(e) => setStudentNo(e.target.value)} placeholder="Enter your student number" required />
-          </div>
+          {userType === 'student' && (
+            <>
+              <label className="campus-field-label">Student ID</label>
+              <div className="campus-input-row" style={{ marginBottom: 14 }}>
+                <GraduationCap className="campus-input-icon" size={20} />
+                <input value={studentNo} onChange={(e) => setStudentNo(e.target.value)} placeholder="Enter your student number" required />
+              </div>
+            </>
+          )}
 
           <label className="campus-field-label">Email</label>
           <div className="campus-input-row" style={{ marginBottom: 14 }}>
@@ -85,7 +114,7 @@ export function RegisterPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your university email"
+              placeholder={userType === 'student' ? "Enter your university email" : "Enter your work email"}
               required
             />
           </div>
@@ -105,22 +134,42 @@ export function RegisterPage() {
             </button>
           </div>
 
-          <label className="campus-field-label">Department</label>
+          <label className="campus-field-label">{userType === 'student' ? 'Department' : 'Service Role'}</label>
           <div className="campus-input-row" style={{ marginBottom: 14 }}>
-            <input value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="e.g. Computer Engineering" required />
+            {userType === 'student' ? (
+              <input value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="e.g. Computer Engineering" required />
+            ) : (
+              <select 
+                value={department} 
+                onChange={(e) => setDepartment(e.target.value)} 
+                required
+                style={{ width: '100%', border: 'none', background: 'transparent', outline: 'none', fontSize: 16, color: 'inherit' }}
+              >
+                <option value="ServiceProvider_Cafeteria">Cafeteria Staff</option>
+                <option value="ServiceProvider_Hairdresser">Hairdresser</option>
+                <option value="ServiceProvider_Stationery">Stationery</option>
+                <option value="ServiceProvider_Market">Market Staff</option>
+                <option value="ServiceProvider_Shuttle">Shuttle Operator</option>
+                <option value="ServiceProvider_Library">Library Staff</option>
+              </select>
+            )}
           </div>
 
-          <label className="campus-field-label">Class Year</label>
-          <div className="campus-input-row" style={{ marginBottom: 20 }}>
-            <input
-              type="number"
-              min={1}
-              max={8}
-              value={classYear}
-              onChange={(e) => setClassYear(Number(e.target.value))}
-              required
-            />
-          </div>
+          {userType === 'student' && (
+            <>
+              <label className="campus-field-label">Class Year</label>
+              <div className="campus-input-row" style={{ marginBottom: 20 }}>
+                <input
+                  type="number"
+                  min={1}
+                  max={8}
+                  value={classYear}
+                  onChange={(e) => setClassYear(Number(e.target.value))}
+                  required
+                />
+              </div>
+            </>
+          )}
 
           <button className="campus-btn-primary" type="submit" disabled={submitting}>
             {submitting ? 'Creating…' : 'Create Account'}

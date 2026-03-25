@@ -4,6 +4,14 @@ const config: CapacitorConfig = {
   appId: 'com.yeditepe.campusapp',
   appName: 'Yeditepe Campus',
   webDir: 'dist',
+  plugins: {
+    CapacitorHttp: {
+      enabled: true,
+    },
+  },
+  server: {
+    cleartext: true,
+  },
   /*
    * Physical device + live reload (optional): point to your PC LAN IP and Vite port.
    * server: { url: 'http://192.168.1.10:5173', cleartext: true },

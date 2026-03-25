@@ -1,7 +1,17 @@
+import { Capacitor } from '@capacitor/core'
+
 const TOKEN_KEY = 'yeditepe_campus_token'
 
 export function apiUrl(path: string): string {
-  const raw = import.meta.env.VITE_API_URL?.trim() ?? ''
+  let raw = import.meta.env.VITE_API_URL?.trim() ?? ''
+  if (!raw && Capacitor.isNativePlatform()) {
+    if (Capacitor.getPlatform() === 'android') {
+      raw = 'http://10.0.2.2:8080'
+    } else if (Capacitor.getPlatform() === 'ios') {
+      raw = 'http://localhost:8080'
+    }
+  }
+  
   const base = raw.replace(/\/$/, '')
   const p = path.startsWith('/') ? path : `/${path}`
   return base ? `${base}${p}` : p

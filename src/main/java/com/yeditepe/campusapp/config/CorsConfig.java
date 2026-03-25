@@ -16,6 +16,7 @@ public class CorsConfig {
         CorsConfiguration config = new CorsConfiguration();
         // Web (Vite), LAN IP, and Capacitor / WebView origins
         config.setAllowedOriginPatterns(List.of(
+                "http://localhost",
                 "http://localhost:*",
                 "http://127.0.0.1:*",
                 "https://localhost",

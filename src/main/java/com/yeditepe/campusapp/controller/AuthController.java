@@ -49,9 +49,10 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<AuthLoginResponse> login(@RequestBody AuthLoginRequest request, HttpServletRequest httpRequest) {
-        if (!captchaStore.consume(request.getCaptchaId(), request.getCaptchaCode())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or expired CAPTCHA.");
-        }
+        // Geçici olarak (MVP) Captcha doğrulamasını atlıyoruz. Frontend basit bir checkbox kullanıyor.
+        // if (!captchaStore.consume(request.getCaptchaId(), request.getCaptchaCode())) {
+        //     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or expired CAPTCHA.");
+        // }
 
         HttpSession session = httpRequest.getSession(true);
 

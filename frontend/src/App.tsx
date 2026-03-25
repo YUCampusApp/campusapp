@@ -14,6 +14,12 @@ import { LectureNotesPage } from './pages/LectureNotesPage'
 import { ShuttleTrackingPage } from './pages/ShuttleTrackingPage'
 import { CampusMapFinderPage } from './pages/CampusMapFinderPage'
 import { NotificationsPage } from './pages/NotificationsPage'
+import { CafeteriaManagementPage } from './pages/CafeteriaManagementPage'
+import { ShuttleManagementPage } from './pages/ShuttleManagementPage'
+import { LibraryManagementPage } from './pages/LibraryManagementPage'
+import { HairdresserManagementPage } from './pages/HairdresserManagementPage'
+import { MarketManagementPage } from './pages/MarketManagementPage'
+
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
@@ -48,6 +54,12 @@ export default function App() {
             <Route path="shuttle" element={<ShuttleTrackingPage />} />
             <Route path="campus-map" element={<CampusMapFinderPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
+            
+            <Route path="cafeteria-management" element={<CafeteriaManagementPage />} />
+            <Route path="shuttle-management" element={<ShuttleManagementPage />} />
+            <Route path="library-management" element={<LibraryManagementPage />} />
+            <Route path="hairdresser-management" element={<HairdresserManagementPage />} />
+            <Route path="market-management" element={<MarketManagementPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

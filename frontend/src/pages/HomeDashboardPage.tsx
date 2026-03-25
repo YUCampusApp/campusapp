@@ -7,11 +7,16 @@ import {
   LibraryBig,
   MapPinned,
   Puzzle,
+  Coffee,
+  Scissors,
+  ShoppingCart,
+  PenTool
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchJson } from '../lib/api'
 import { ScreenHeader } from '../components/ScreenHeader'
+import { ServiceModal, CafeteriaContent, HairdresserContent, MarketContent, StationeryContent } from '../components/ServiceModals'
 import type { DashboardResponse } from './types'
 
 const modules: { to: string; label: string; Icon: React.ComponentType<{ size?: number; color?: string }>; tint: string }[] = [
@@ -28,6 +33,7 @@ const modules: { to: string; label: string; Icon: React.ComponentType<{ size?: n
 export function HomeDashboardPage() {
   const [data, setData] = useState<DashboardResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [activeModal, setActiveModal] = useState<'cafeteria' | 'hairdresser' | 'market' | 'stationery' | null>(null)
 
   useEffect(() => {
     fetchJson<DashboardResponse>('/api/dashboard/me')
@@ -125,6 +131,40 @@ export function HomeDashboardPage() {
           </div>
         </div>
 
+        <div style={{ marginTop: 22 }}>
+          <h3 className="campus-section-title" style={{ marginBottom: 12 }}>
+            Campus Services
+          </h3>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: 12,
+            }}
+          >
+            {[
+              { id: 'cafeteria', label: 'Cafeteria', Icon: Coffee, tint: 'rgba(234, 88, 12, 0.1)', color: '#ea580c' },
+              { id: 'hairdresser', label: 'Hairdresser', Icon: Scissors, tint: 'rgba(168, 85, 247, 0.1)', color: '#a855f7' },
+              { id: 'market', label: 'Market', Icon: ShoppingCart, tint: 'rgba(16, 185, 129, 0.1)', color: '#10b981' },
+              { id: 'stationery', label: 'Stationery', Icon: PenTool, tint: 'rgba(234, 179, 8, 0.1)', color: '#eab308' },
+            ].map((srv) => (
+              <button
+                key={srv.id}
+                onClick={() => setActiveModal(srv.id as any)}
+                style={{
+                  textDecoration: 'none', background: 'var(--campus-card)', borderRadius: 'var(--campus-radius-md)', padding: 16,
+                  boxShadow: 'var(--campus-shadow)', display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-start', border: 'none', cursor: 'pointer', fontFamily: 'inherit'
+                }}
+              >
+                <div style={{ width: 44, height: 44, borderRadius: 14, background: srv.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <srv.Icon size={22} color={srv.color} />
+                </div>
+                <span style={{ fontWeight: 800, fontSize: 14, color: 'var(--campus-text)' }}>{srv.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {data.favorites.length > 0 ? (
           <div style={{ marginTop: 22 }}>
             <h3 className="campus-section-title" style={{ marginBottom: 12 }}>
@@ -211,6 +251,20 @@ export function HomeDashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <ServiceModal isOpen={activeModal === 'cafeteria'} onClose={() => setActiveModal(null)} title="Cafeteria Menu">
+        <CafeteriaContent />
+      </ServiceModal>
+      <ServiceModal isOpen={activeModal === 'hairdresser'} onClose={() => setActiveModal(null)} title="Hairdresser">
+        <HairdresserContent />
+      </ServiceModal>
+      <ServiceModal isOpen={activeModal === 'market'} onClose={() => setActiveModal(null)} title="Market Stock">
+        <MarketContent />
+      </ServiceModal>
+      <ServiceModal isOpen={activeModal === 'stationery'} onClose={() => setActiveModal(null)} title="Stationery">
+        <StationeryContent />
+      </ServiceModal>
     </div>
   )
 }
