@@ -14,11 +14,14 @@ import com.yeditepe.campusapp.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -35,6 +38,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     private final AuthenticationManager authenticationManager;
     private final StudentRepository studentRepository;
@@ -59,24 +64,46 @@ public class AuthController {
         //     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or expired CAPTCHA.");
         // }
 
-        HttpSession session = httpRequest.getSession(true);
-
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getStudentNo(), request.getPassword())
+        String loginId = request.getStudentNo() != null ? request.getStudentNo().trim() : "";
+        log.info(
+                "[AUTH LOGIN] controller start | loginId(len={}) | Origin={} | Remote={}",
+                loginId.length(),
+                httpRequest.getHeader("Origin"),
+                httpRequest.getRemoteAddr()
         );
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        // Explicitly persist the security context into the session so that subsequent API calls see the user.
-        session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, SecurityContextHolder.getContext());
+        HttpSession session = httpRequest.getSession(true);
 
-        UserDetails ud = (UserDetails) authentication.getPrincipal();
-        String principal = ud.getUsername();
-        User account = resolveAccount(principal);
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginId, request.getPassword())
+            );
 
-        AuthLoginResponse response = toAuthLoginResponse(account);
-        response.setAccessToken(jwtService.createToken(principal));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            // Explicitly persist the security context into the session so that subsequent API calls see the user.
+            session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, SecurityContextHolder.getContext());
 
-        return ResponseEntity.ok(response);
+            UserDetails ud = (UserDetails) authentication.getPrincipal();
+            String principal = ud.getUsername();
+            User account = resolveAccount(principal);
+
+            AuthLoginResponse response = toAuthLoginResponse(account);
+            response.setAccessToken(jwtService.createToken(principal));
+
+            log.info("[AUTH LOGIN] success | resolvedAccount={} id={}", account.getClass().getSimpleName(), account.getId());
+            return ResponseEntity.ok(response);
+        } catch (AuthenticationException ex) {
+            log.warn(
+                    "[AUTH LOGIN] AuthenticationManager rejected | loginId(len={}) | {}: {}",
+                    loginId.length(),
+                    ex.getClass().getSimpleName(),
+                    ex.getMessage()
+            );
+            throw ex;
+        } catch (Exception ex) {
+            log.error("[AUTH LOGIN] unexpected error | loginId(len={})", loginId.length(), ex);
+            throw ex;
+        }
     }
 
     @GetMapping("/me")

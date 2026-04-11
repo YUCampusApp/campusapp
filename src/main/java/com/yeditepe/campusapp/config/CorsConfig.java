@@ -24,19 +24,19 @@ public class CorsConfig {
      * Sabit liste (localhost, 127.0.0.1) makine adı / LAN hostname (ör. efe-HP-Ubuntu:5173) ile yetmez;
      * Spring Security CORS reddi çoğu zaman 403 görünür.
      * <p>
-     * {@code production} profili açık değilken gelen Origin yansıtılır. Prod’da allowlist kullanın.
+     * {@code production} profili açık değilken tüm origin pattern’leri kabul edilir. Prod’da HTTPS allowlist kullanılır.
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         return request -> {
             CorsConfiguration config = new CorsConfiguration();
             String origin = request.getHeader(HttpHeaders.ORIGIN);
-            if (origin != null) {
-                if (!isProductionProfile()) {
-                    config.setAllowedOrigins(List.of(origin));
-                } else if (isAllowedProductionOrigin(origin)) {
-                    config.setAllowedOrigins(List.of(origin));
-                }
+            if (!isProductionProfile()) {
+                // Origin yoksa (bazı proxy/WebView) veya LAN hostname ile credentials kullanımında
+                // yansıtma yetmez; pattern "*" + allowCredentials Spring 5.3+ ile geliştirmede güvenlidir.
+                config.setAllowedOriginPatterns(List.of("*"));
+            } else if (origin != null && isAllowedProductionOrigin(origin)) {
+                config.setAllowedOrigins(List.of(origin));
             }
             config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
             config.setAllowedHeaders(List.of("*"));

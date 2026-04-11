@@ -34,8 +34,16 @@ public class SecurityConfig {
 
     // 2. Kapıdaki Güvenlik Görevlimizin Kuralları
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+    public SecurityFilterChain filterChain(
+            HttpSecurity http,
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            SecurityProblemHandlers securityProblemHandlers
+    ) throws Exception {
         http
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(securityProblemHandlers.authenticationEntryPoint())
+                        .accessDeniedHandler(securityProblemHandlers.accessDeniedHandler())
+                )
                 .csrf(csrf -> csrf.disable()) // Şimdilik karmaşık web güvenliklerini kapatıyoruz (Mobil API için genelde kapalı olur)
                 .cors(Customizer.withDefaults())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
