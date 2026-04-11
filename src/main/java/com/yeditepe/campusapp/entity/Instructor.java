@@ -12,10 +12,12 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true) // User'daki özellikleri de eşleştirmeye katar
 public class Instructor extends User {
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "instructor_no", nullable = false, unique = true)
     private String instructorNo; // Eğitmen sicil veya ID numarası
 
+    @Column(name = "department")
     private String department; // Hangi bölümde olduğu
 
+    @Column(name = "title")
     private String title; // Prof. Dr., Doç. Dr. gibi unvanları tutmak için
 }

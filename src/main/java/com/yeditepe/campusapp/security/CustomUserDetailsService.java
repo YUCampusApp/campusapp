@@ -1,7 +1,11 @@
 package com.yeditepe.campusapp.security;
 
+import com.yeditepe.campusapp.entity.Admin;
+import com.yeditepe.campusapp.entity.Instructor;
 import com.yeditepe.campusapp.entity.Student;
+import com.yeditepe.campusapp.entity.User;
 import com.yeditepe.campusapp.repository.StudentRepository;
+import com.yeditepe.campusapp.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -10,8 +14,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import org.springframework.security.core.userdetails.User;
-
 import java.util.List;
 
 @Service
@@ -19,21 +21,43 @@ import java.util.List;
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final StudentRepository studentRepository;
+    private final UserRepository userRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String studentNo) throws UsernameNotFoundException {
-        Student student = studentRepository.findByStudentNo(studentNo);
-        if (student == null) {
-            throw new UsernameNotFoundException("Student not found: " + studentNo);
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        Student byNo = studentRepository.findByStudentNo(username);
+        if (byNo != null) {
+            return buildUserDetails(byNo.getPassword(), byNo.getStudentNo(), authoritiesFor(byNo));
         }
 
-        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_STUDENT"));
+        Student byEmail = studentRepository.findByEmail(username);
+        if (byEmail != null) {
+            return buildUserDetails(byEmail.getPassword(), byEmail.getStudentNo(), authoritiesFor(byEmail));
+        }
 
-        // Username olarak login’de kullanılan öğrenci numarasını tutuyoruz.
-        return User.withUsername(student.getStudentNo())
-                .password(student.getPassword())
+        User user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+
+        return buildUserDetails(user.getPassword(), username, authoritiesFor(user));
+    }
+
+    private static UserDetails buildUserDetails(String password, String principalName, List<GrantedAuthority> authorities) {
+        return org.springframework.security.core.userdetails.User.withUsername(principalName)
+                .password(password)
                 .authorities(authorities)
                 .build();
     }
-}
 
+    private static List<GrantedAuthority> authoritiesFor(User user) {
+        if (user instanceof Student) {
+            return List.of(new SimpleGrantedAuthority("ROLE_STUDENT"));
+        }
+        if (user instanceof Admin) {
+            return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        }
+        if (user instanceof Instructor) {
+            return List.of(new SimpleGrantedAuthority("ROLE_INSTRUCTOR"));
+        }
+        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+    }
+}

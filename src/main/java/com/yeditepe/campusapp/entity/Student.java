@@ -12,10 +12,12 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class Student extends User {
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "student_no", nullable = false, unique = true)
     private String studentNo;
 
+    @Column(name = "department")
     private String department;
 
+    @Column(name = "class_year")
     private Integer classYear;
 }

@@ -5,8 +5,12 @@ import com.yeditepe.campusapp.auth.JwtService;
 import com.yeditepe.campusapp.dto.AuthCaptchaResponse;
 import com.yeditepe.campusapp.dto.AuthLoginRequest;
 import com.yeditepe.campusapp.dto.AuthLoginResponse;
+import com.yeditepe.campusapp.entity.Admin;
+import com.yeditepe.campusapp.entity.Instructor;
 import com.yeditepe.campusapp.entity.Student;
+import com.yeditepe.campusapp.entity.User;
 import com.yeditepe.campusapp.repository.StudentRepository;
+import com.yeditepe.campusapp.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +38,7 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final StudentRepository studentRepository;
+    private final UserRepository userRepository;
     private final CaptchaStore captchaStore;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
@@ -64,19 +69,12 @@ public class AuthController {
         // Explicitly persist the security context into the session so that subsequent API calls see the user.
         session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, SecurityContextHolder.getContext());
 
-        Student student = studentRepository.findByStudentNo(request.getStudentNo());
-        if (student == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authenticated user not found.");
-        }
+        UserDetails ud = (UserDetails) authentication.getPrincipal();
+        String principal = ud.getUsername();
+        User account = resolveAccount(principal);
 
-        AuthLoginResponse response = new AuthLoginResponse();
-        response.setId(student.getId());
-        response.setName(student.getName());
-        response.setEmail(student.getEmail());
-        response.setStudentNo(student.getStudentNo());
-        response.setDepartment(student.getDepartment());
-        response.setClassYear(student.getClassYear());
-        response.setAccessToken(jwtService.createToken(student.getStudentNo()));
+        AuthLoginResponse response = toAuthLoginResponse(account);
+        response.setAccessToken(jwtService.createToken(principal));
 
         return ResponseEntity.ok(response);
     }
@@ -88,21 +86,10 @@ public class AuthController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated.");
         }
 
-        String studentNo = userDetails.getUsername();
-        Student student = studentRepository.findByStudentNo(studentNo);
-        if (student == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found.");
-        }
+        String username = userDetails.getUsername();
+        User account = resolveAccount(username);
 
-        AuthLoginResponse response = new AuthLoginResponse();
-        response.setId(student.getId());
-        response.setName(student.getName());
-        response.setEmail(student.getEmail());
-        response.setStudentNo(student.getStudentNo());
-        response.setDepartment(student.getDepartment());
-        response.setClassYear(student.getClassYear());
-
-        return response;
+        return toAuthLoginResponse(account);
     }
 
     @PostMapping("/change-password")
@@ -111,20 +98,55 @@ public class AuthController {
         if (!(principal instanceof UserDetails userDetails)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated.");
         }
-        String studentNo = userDetails.getUsername();
-        Student student = studentRepository.findByStudentNo(studentNo);
-        if (student == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found.");
-        }
+        String username = userDetails.getUsername();
+        User account = resolveAccount(username);
         if (request.getNewPassword() == null || request.getNewPassword().length() < 6) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "New password must be at least 6 characters.");
         }
-        if (!passwordEncoder.matches(request.getCurrentPassword(), student.getPassword())) {
+        if (!passwordEncoder.matches(request.getCurrentPassword(), account.getPassword())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Current password is incorrect.");
         }
-        student.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        studentRepository.save(student);
+        account.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(account);
         return ResponseEntity.ok().build();
+    }
+
+    private User resolveAccount(String principal) {
+        Student byNo = studentRepository.findByStudentNo(principal);
+        if (byNo != null) {
+            return byNo;
+        }
+        Student byEmail = studentRepository.findByEmail(principal);
+        if (byEmail != null) {
+            return byEmail;
+        }
+        return userRepository.findByEmail(principal)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authenticated user not found."));
+    }
+
+    private static AuthLoginResponse toAuthLoginResponse(User user) {
+        AuthLoginResponse response = new AuthLoginResponse();
+        response.setId(user.getId());
+        response.setName(user.getName());
+        response.setEmail(user.getEmail());
+        if (user instanceof Student s) {
+            response.setStudentNo(s.getStudentNo());
+            response.setDepartment(s.getDepartment());
+            response.setClassYear(s.getClassYear());
+        } else if (user instanceof Admin a) {
+            response.setStudentNo(a.getEmail());
+            response.setDepartment(a.getServiceRole() != null ? a.getServiceRole().name() : "");
+            response.setClassYear(null);
+        } else if (user instanceof Instructor i) {
+            response.setStudentNo(i.getInstructorNo());
+            response.setDepartment(i.getDepartment());
+            response.setClassYear(null);
+        } else {
+            response.setStudentNo(user.getEmail());
+            response.setDepartment("");
+            response.setClassYear(null);
+        }
+        return response;
     }
 }
 

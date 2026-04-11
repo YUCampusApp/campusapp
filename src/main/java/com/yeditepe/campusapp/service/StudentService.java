@@ -3,6 +3,7 @@ package com.yeditepe.campusapp.service;
 import com.yeditepe.campusapp.dto.StudentRegisterRequest;
 import com.yeditepe.campusapp.dto.StudentResponse;
 import com.yeditepe.campusapp.entity.Student;
+import com.yeditepe.campusapp.entity.UserRole;
 import com.yeditepe.campusapp.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,6 +37,7 @@ public class StudentService {
         student.setStudentNo(request.getStudentNo());
         student.setDepartment(request.getDepartment());
         student.setClassYear(request.getClassYear());
+        student.setRole(UserRole.student);
 
         // 4. Veritabanına kaydet
         Student savedStudent = studentRepository.save(student);
