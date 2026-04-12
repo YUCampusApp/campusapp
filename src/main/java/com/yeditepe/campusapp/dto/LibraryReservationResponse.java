@@ -1,5 +1,6 @@
 package com.yeditepe.campusapp.dto;
 
+import com.yeditepe.campusapp.entity.LibrarySectionType;
 import lombok.Data;
 
 import java.time.Instant;
@@ -7,12 +8,16 @@ import java.time.Instant;
 @Data
 public class LibraryReservationResponse {
     private Long id;
-    private Long slotId;
-    private String startTime;
-    private String endTime;
-    /** ISO local date (yyyy-MM-dd) of the reserved slot */
+    private LibrarySectionType sectionType;
+    /** ISO-8601 UTC anı */
+    private String startAt;
+    private String endAt;
+    /** Europe/Istanbul yerel (API/istemci için) */
+    private String startLocal;
+    private String endLocal;
+    /** Başlangıcın yerel tarihi (yyyy-MM-dd) */
     private String reservationDate;
-    private String status; // BOOKED/CANCELLED/CONFIRMED
+    /** ACTIVE, CANCELLED, COMPLETED */
+    private String status;
     private Instant createdAt;
 }
-

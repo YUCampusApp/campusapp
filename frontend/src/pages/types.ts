@@ -111,19 +111,20 @@ export type LectureNoteResponse = {
   fileName: string
 }
 
-export type LibrarySlotResponse = {
-  slotId: number
-  startTime: string
-  endTime: string
-  emptySeats: number
-  occupancyRate: number
+export type LibrarySectionStatusResponse = {
+  sectionType: 'COMP' | 'GENERAL'
+  totalSeats: number
+  availableSeats: number
+  full: boolean
 }
 
 export type LibraryReservationResponse = {
   id: number
-  slotId: number
-  startTime: string
-  endTime: string
+  sectionType: 'COMP' | 'GENERAL'
+  startAt: string
+  endAt: string
+  startLocal: string
+  endLocal: string
   reservationDate?: string
   status: string
   createdAt: string

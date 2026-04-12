@@ -1,19 +1,21 @@
 -- =============================================================================
 -- CampusApp – kullanıcı tablolarını sıfırla + demo seed (PostgreSQL / DBeaver)
 --
--- UYARI: students, instructors, admins, users içindeki TÜM satırlar silinir.
+-- UYARI: students, instructors, admins, users + kütüphane rezervasyonları/bölümleri sıfırlanır.
 --        (DROP SCHEMA kullanmıyoruz; public şemadaki diğer tablolar kalır.)
 --
 -- Şifre: Password1!  |  Kütüphane admin: demo.admin.library@yeditepe.local
 -- Execute SQL Script (Ctrl+Alt+X).
 -- =============================================================================
 
+TRUNCATE TABLE public.library_reservations RESTART IDENTITY CASCADE;
 TRUNCATE TABLE
   public.students,
   public.instructors,
   public.admins,
   public.users
 RESTART IDENTITY CASCADE;
+TRUNCATE TABLE public.library_sections RESTART IDENTITY CASCADE;
 
 INSERT INTO public.users (name, email, password, "role") VALUES
   ('Demo Student Alpha',    'demo.student1@yeditepe.local',    '$2b$10$YGQTcNZMNgSJTl9/au043OH5WGg0v698HIn1HtCRk6.i6untU9.6y', 'student'),
@@ -69,5 +71,21 @@ BEGIN
   IF seq_name IS NOT NULL THEN
     SELECT COALESCE(MAX(id), 1) INTO max_id FROM public.users;
     PERFORM setval(seq_name::regclass, max_id);
+  END IF;
+END $$;
+
+INSERT INTO public.library_sections (total_seats, section_type) VALUES
+  (30, 'COMP'),
+  (80, 'GENERAL');
+
+DO $$
+DECLARE
+  seq_name text;
+  max_id bigint;
+BEGIN
+  seq_name := pg_get_serial_sequence('public.library_sections', 'id');
+  IF seq_name IS NOT NULL THEN
+    SELECT COALESCE(MAX(id), 1) INTO max_id FROM public.library_sections;
+    PERFORM setval(seq_name::regclass, GREATEST(max_id, 1));
   END IF;
 END $$;

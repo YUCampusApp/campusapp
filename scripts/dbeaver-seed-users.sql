@@ -8,8 +8,17 @@
 -- admins.role: Cafeteria | Library | Hairdresser | Market | Shuttle | Stationary
 -- (users."role" = sistem: student / instructor / admin)
 --
+-- Kütüphane: library_sections (COMP / GENERAL, total_seats), library_reservations
+-- (student_id, section_id, start_at, end_at, status: ACTIVE|CANCELLED|COMPLETED).
+-- Demo öğrenciler silinmeden önce onlara ait rezervasyonlar temizlenir.
+--
 -- Execute SQL Script (Ctrl+Alt+X); parça parça Ctrl+Enter kullanmayın.
 -- =============================================================================
+
+DELETE FROM public.library_reservations
+WHERE student_id IN (
+  SELECT u.id FROM public.users u WHERE u.email LIKE 'demo.%@yeditepe.local'
+);
 
 DELETE FROM public.students
 WHERE id IN (SELECT u.id FROM public.users u WHERE u.email LIKE 'demo.%@yeditepe.local');
@@ -76,6 +85,32 @@ BEGIN
   IF seq_name IS NOT NULL THEN
     SELECT COALESCE(MAX(id), 1) INTO max_id FROM public.users;
     PERFORM setval(seq_name::regclass, max_id);
+  END IF;
+END $$;
+
+-- Kütüphane bölümleri (Hibernate tek tablo + section_type ayırıcı; uygulama da boşsa oluşturur)
+INSERT INTO public.library_sections (total_seats, section_type)
+SELECT 30, 'COMP'
+WHERE NOT EXISTS (SELECT 1 FROM public.library_sections WHERE section_type = 'COMP');
+
+INSERT INTO public.library_sections (total_seats, section_type)
+SELECT 80, 'GENERAL'
+WHERE NOT EXISTS (SELECT 1 FROM public.library_sections WHERE section_type = 'GENERAL');
+
+DO $$
+DECLARE
+  seq_name text;
+  max_id bigint;
+BEGIN
+  seq_name := pg_get_serial_sequence('public.library_sections', 'id');
+  IF seq_name IS NOT NULL THEN
+    SELECT COALESCE(MAX(id), 1) INTO max_id FROM public.library_sections;
+    PERFORM setval(seq_name::regclass, GREATEST(max_id, 1));
+  END IF;
+  seq_name := pg_get_serial_sequence('public.library_reservations', 'id');
+  IF seq_name IS NOT NULL THEN
+    SELECT COALESCE(MAX(id), 1) INTO max_id FROM public.library_reservations;
+    PERFORM setval(seq_name::regclass, GREATEST(max_id, 1));
   END IF;
 END $$;
 

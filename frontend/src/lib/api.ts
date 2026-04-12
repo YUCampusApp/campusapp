@@ -6,9 +6,9 @@ export function apiUrl(path: string): string {
   let raw = import.meta.env.VITE_API_URL?.trim() ?? ''
   if (!raw && Capacitor.isNativePlatform()) {
     if (Capacitor.getPlatform() === 'android') {
-      raw = 'http://10.0.2.2:8080'
+      raw = 'http://10.0.2.2:8081'
     } else if (Capacitor.getPlatform() === 'ios') {
-      raw = 'http://localhost:8080'
+      raw = 'http://localhost:8081'
     }
   }
   
