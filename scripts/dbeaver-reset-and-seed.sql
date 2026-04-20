@@ -1,7 +1,7 @@
 -- =============================================================================
 -- CampusApp – kullanıcı tablolarını sıfırla + demo seed (PostgreSQL / DBeaver)
 --
--- UYARI: students, instructors, admins, users + library/hairdresser rezervasyonları sıfırlanır.
+-- UYARI: students, instructors, admins, users + library/hairdresser rezervasyonları + market_items sıfırlanır.
 --        (DROP SCHEMA kullanmıyoruz; public şemadaki diğer tablolar kalır.)
 --
 -- Şifre: Password1!  |  Kütüphane admin: demo.admin.library@yeditepe.local
@@ -13,6 +13,7 @@ SET search_path TO public;
 
 TRUNCATE TABLE public.hairdresser_appointments RESTART IDENTITY CASCADE;
 TRUNCATE TABLE public.library_reservations RESTART IDENTITY CASCADE;
+TRUNCATE TABLE public.market_items RESTART IDENTITY CASCADE;
 TRUNCATE TABLE
   public.students,
   public.instructors,
@@ -128,6 +129,15 @@ FROM public.students s
 JOIN public.users u ON u.id = s.id
 WHERE u.email = 'demo.student2@yeditepe.local';
 
+-- Demo market stoku
+INSERT INTO public.market_items (item, stock) VALUES
+  ('Bottled Water 0.5L', 120),
+  ('Energy Drink', 35),
+  ('Mixed Nuts', 18),
+  ('Sandwich (Cheese)', 0),
+  ('Chocolate Bar', 65),
+  ('Filter Coffee', 40);
+
 DO $$
 DECLARE
   seq_name text;
@@ -146,6 +156,11 @@ BEGIN
   seq_name := pg_get_serial_sequence('public.hairdresser_appointments', 'id');
   IF seq_name IS NOT NULL THEN
     SELECT COALESCE(MAX(id), 1) INTO max_id FROM public.hairdresser_appointments;
+    PERFORM setval(seq_name::regclass, GREATEST(max_id, 1));
+  END IF;
+  seq_name := pg_get_serial_sequence('public.market_items', 'id');
+  IF seq_name IS NOT NULL THEN
+    SELECT COALESCE(MAX(id), 1) INTO max_id FROM public.market_items;
     PERFORM setval(seq_name::regclass, GREATEST(max_id, 1));
   END IF;
 END $$;

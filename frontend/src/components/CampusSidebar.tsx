@@ -10,6 +10,7 @@ import {
   LogOut,
   MapPinned,
   Puzzle,
+  ShoppingCart,
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
@@ -54,6 +55,7 @@ export function CampusSidebar({ onLogout }: { onLogout: () => void }) {
       {!isServiceAdmin ? <SideLink to="/dashboard/lecture-notes" label="Notes" Icon={BookOpen} /> : null}
       {serviceAdminRole === 'library' ? <SideLink to="/dashboard/library-management" label="Library Admin" Icon={LibraryBig} /> : null}
       {serviceAdminRole === 'hairdresser' ? <SideLink to="/dashboard/hairdresser-management" label="Hairdresser Admin" Icon={Scissors} /> : null}
+      {serviceAdminRole === 'market' ? <SideLink to="/dashboard/market-management" label="Market Admin" Icon={ShoppingCart} /> : null}
       <SideLink to="/dashboard/shuttle" label="Shuttle" Icon={Bus} />
       <SideLink to="/dashboard/campus-map" label="Campus Map" Icon={MapPinned} />
       <SideLink to="/dashboard/notifications" label="Notifications" Icon={Bell} />

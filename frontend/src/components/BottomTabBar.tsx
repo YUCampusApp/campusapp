@@ -6,6 +6,7 @@ import {
   LibraryBig,
   MapPinned,
   Scissors,
+  ShoppingCart,
   User,
 } from 'lucide-react'
 import { NavLink, useLocation } from 'react-router-dom'
@@ -71,6 +72,16 @@ export function BottomTabBar() {
     )
   }
 
+  if (pathname.includes('/market-management')) {
+    return (
+      <nav className="campus-tabbar">
+        <TabItem to="/dashboard" end label="Home" Icon={Home} active={homeActive} />
+        <TabItem to="/dashboard/market-management" end label="Market Admin" Icon={ShoppingCart} active />
+        <TabItem to="/dashboard/profile" label="Profile" Icon={User} active={profileActive} />
+      </nav>
+    )
+  }
+
   if (pathname.includes('/library')) {
     return (
       <nav className="campus-tabbar">
@@ -126,6 +137,8 @@ export function BottomTabBar() {
       <TabItem to="/dashboard" end label="Home" Icon={Home} active={homeActive} />
       {serviceAdminRole === 'hairdresser' ? (
         <TabItem to="/dashboard/hairdresser-management" label="Hairdresser Admin" Icon={Scissors} active={pathname.includes('/hairdresser-management')} />
+      ) : serviceAdminRole === 'market' ? (
+        <TabItem to="/dashboard/market-management" label="Market Admin" Icon={ShoppingCart} active={pathname.includes('/market-management')} />
       ) : (
         <TabItem to="/dashboard/library-management" label="Library Admin" Icon={LibraryBig} active={pathname.includes('/library-management')} />
       )}

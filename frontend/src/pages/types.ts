@@ -175,3 +175,9 @@ export type NotificationResponse = {
   read: boolean
 }
 
+export type MarketItemResponse = {
+  id: number
+  item: string
+  stock: number
+}
+

@@ -8,16 +8,21 @@ export function isHairdresserAdminUser(user: AuthUser | null): boolean {
   return getServiceAdminRole(user) === 'hairdresser'
 }
 
+export function isMarketAdminUser(user: AuthUser | null): boolean {
+  return getServiceAdminRole(user) === 'market'
+}
+
 export function isServiceAdminUser(user: AuthUser | null): boolean {
   return getServiceAdminRole(user) !== null
 }
 
-export function getServiceAdminRole(user: AuthUser | null): 'library' | 'hairdresser' | null {
+export function getServiceAdminRole(user: AuthUser | null): 'library' | 'hairdresser' | 'market' | null {
   if (!user) return null
   const dept = (user.department ?? '').trim().toLowerCase()
   const identifier = (user.studentNo ?? '').trim().toLowerCase()
   if (!identifier.includes('@')) return null
   if (dept === 'library') return 'library'
   if (dept === 'hairdresser') return 'hairdresser'
+  if (dept === 'market') return 'market'
   return null
 }

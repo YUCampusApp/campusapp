@@ -101,6 +101,22 @@ export async function postJson<T>(path: string, body: unknown): Promise<T> {
   return JSON.parse(raw) as T
 }
 
+export async function patchJson<T>(path: string, body: unknown): Promise<T> {
+  const headers = mergeHeaders({ 'Content-Type': 'application/json' })
+  const res = await fetch(apiUrl(path), {
+    method: 'PATCH',
+    credentials: 'include',
+    headers,
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) {
+    throw new Error(await readError(res))
+  }
+  const raw = await res.text()
+  if (!raw.trim()) return undefined as T
+  return JSON.parse(raw) as T
+}
+
 /** POST JSON body; server returns 200 with empty body. */
 export async function postJsonNoContent(path: string, body: unknown): Promise<void> {
   const headers = mergeHeaders({ 'Content-Type': 'application/json' })

@@ -1,5 +1,7 @@
 import { X, Calendar as CalendarIcon, Package, Coffee, ShoppingBag, PenLine } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { getJson } from '../lib/api'
+import type { MarketItemResponse } from '../pages/types'
 
 export function ServiceModal({
   isOpen,
@@ -182,16 +184,82 @@ export function StationeryContent() {
   return <StockGrid items={items} tint="rgba(234, 179, 8, 0.1)" />
 }
 
+function MarketStockGrid({ rows }: { rows: MarketItemResponse[] }) {
+  const tint = 'rgba(16, 185, 129, 0.1)'
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+      {rows.map((row) => {
+        const coffee = row.item.toLowerCase().includes('coffee')
+        const icon = coffee ? <Coffee size={28} color="#10b981" /> : <ShoppingBag size={28} color="#10b981" />
+        const inStock = row.stock > 0
+        return (
+          <div
+            key={row.id}
+            className="campus-card"
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 12, padding: 20 }}
+          >
+            <div style={{ width: 56, height: 56, borderRadius: 16, background: tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {icon}
+            </div>
+            <div style={{ fontWeight: 800, fontSize: 15 }}>{row.item}</div>
+            {inStock ? (
+              <div
+                style={{
+                  marginTop: 'auto',
+                  background: 'rgba(16, 185, 129, 0.1)',
+                  color: '#10b981',
+                  padding: '6px 12px',
+                  borderRadius: 20,
+                  fontSize: 13,
+                  fontWeight: 800,
+                }}
+              >
+                {row.stock} in stock
+              </div>
+            ) : (
+              <div
+                style={{
+                  marginTop: 'auto',
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  color: '#ef4444',
+                  padding: '6px 12px',
+                  borderRadius: 20,
+                  fontSize: 13,
+                  fontWeight: 800,
+                }}
+              >
+                Out of stock
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export function MarketContent() {
-  const items = [
-    { name: 'Bottled Water 0.5L', stock: 120, icon: <ShoppingBag size={28} color="#10b981" /> },
-    { name: 'Energy Drink', stock: 35, icon: <ShoppingBag size={28} color="#10b981" /> },
-    { name: 'Mixed Nuts', stock: 18, icon: <ShoppingBag size={28} color="#10b981" /> },
-    { name: 'Sandwich (Cheese)', stock: 0, icon: <ShoppingBag size={28} color="#10b981" /> },
-    { name: 'Chocolate Bar', stock: 65, icon: <ShoppingBag size={28} color="#10b981" /> },
-    { name: 'Filter Coffee', stock: 40, icon: <Coffee size={28} color="#10b981" /> },
-  ]
-  return <StockGrid items={items} tint="rgba(16, 185, 129, 0.1)" />
+  const [rows, setRows] = useState<MarketItemResponse[] | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setRows(null)
+    setError(null)
+    getJson<MarketItemResponse[]>('/api/market/items')
+      .then(setRows)
+      .catch((e) => setError(e instanceof Error ? e.message : 'Could not load market stock.'))
+  }, [])
+
+  if (error) {
+    return <div className="campus-error">{error}</div>
+  }
+  if (!rows) {
+    return <div style={{ color: 'var(--campus-text-muted)', fontWeight: 600 }}>Loading…</div>
+  }
+  if (rows.length === 0) {
+    return <div style={{ color: 'var(--campus-text-muted)', fontWeight: 600 }}>No products listed yet.</div>
+  }
+  return <MarketStockGrid rows={rows} />
 }
 
 export function HairdresserContent() {

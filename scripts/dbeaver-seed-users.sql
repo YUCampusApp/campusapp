@@ -12,6 +12,7 @@
 -- (student_id, section_id, start_at, end_at, status: ACTIVE|CANCELLED|COMPLETED).
 -- Kuaför: hairdresser_appointments
 -- (student_id, start_at, end_at, status: ACTIVE|CANCELLED|COMPLETED).
+-- Market: market_items (item, stock).
 -- Demo öğrenciler silinmeden önce onlara ait rezervasyonlar temizlenir.
 --
 -- Execute SQL Script (Ctrl+Alt+X); parça parça Ctrl+Enter kullanmayın.
@@ -150,6 +151,16 @@ FROM public.students s
 JOIN public.users u ON u.id = s.id
 WHERE u.email = 'demo.student2@yeditepe.local';
 
+TRUNCATE TABLE public.market_items RESTART IDENTITY CASCADE;
+
+INSERT INTO public.market_items (item, stock) VALUES
+  ('Bottled Water 0.5L', 120),
+  ('Energy Drink', 35),
+  ('Mixed Nuts', 18),
+  ('Sandwich (Cheese)', 0),
+  ('Chocolate Bar', 65),
+  ('Filter Coffee', 40);
+
 DO $$
 DECLARE
   seq_name text;
@@ -168,6 +179,11 @@ BEGIN
   seq_name := pg_get_serial_sequence('public.hairdresser_appointments', 'id');
   IF seq_name IS NOT NULL THEN
     SELECT COALESCE(MAX(id), 1) INTO max_id FROM public.hairdresser_appointments;
+    PERFORM setval(seq_name::regclass, GREATEST(max_id, 1));
+  END IF;
+  seq_name := pg_get_serial_sequence('public.market_items', 'id');
+  IF seq_name IS NOT NULL THEN
+    SELECT COALESCE(MAX(id), 1) INTO max_id FROM public.market_items;
     PERFORM setval(seq_name::regclass, GREATEST(max_id, 1));
   END IF;
 END $$;

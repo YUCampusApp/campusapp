@@ -72,13 +72,30 @@ export function HomeDashboardPage() {
     return m?.[1]?.split(/[,.]/)[0]?.trim() ?? 'Student'
   })()
 
+  const serviceAdminTile =
+    serviceAdminRole === 'hairdresser'
+      ? {
+          to: '/dashboard/hairdresser-management' as const,
+          label: 'Hairdresser Admin',
+          Icon: Scissors,
+          tint: 'rgba(168, 85, 247, 0.18)',
+        }
+      : serviceAdminRole === 'market'
+        ? {
+            to: '/dashboard/market-management' as const,
+            label: 'Market Admin',
+            Icon: ShoppingCart,
+            tint: 'rgba(16, 185, 129, 0.18)',
+          }
+        : {
+            to: '/dashboard/library-management' as const,
+            label: 'Library Admin',
+            Icon: LibraryBig,
+            tint: 'rgba(22, 163, 74, 0.18)',
+          }
+
   const modulesToShow = isServiceAdmin
-    ? modules.filter((m) => !['/dashboard/academic', '/dashboard/schedule', '/dashboard/lecture-notes'].includes(m.to)).concat({
-        to: serviceAdminRole === 'hairdresser' ? '/dashboard/hairdresser-management' : '/dashboard/library-management',
-        label: serviceAdminRole === 'hairdresser' ? 'Hairdresser Admin' : 'Library Admin',
-        Icon: serviceAdminRole === 'hairdresser' ? Scissors : LibraryBig,
-        tint: serviceAdminRole === 'hairdresser' ? 'rgba(168, 85, 247, 0.18)' : 'rgba(22, 163, 74, 0.18)',
-      })
+    ? modules.filter((m) => !['/dashboard/academic', '/dashboard/schedule', '/dashboard/lecture-notes'].includes(m.to)).concat(serviceAdminTile)
     : modules
 
   return (
