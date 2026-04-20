@@ -53,4 +53,14 @@ public class LibraryController {
     public LibraryReservationResponse cancel(@PathVariable Long reservationId) {
         return libraryReservationService.cancel(currentStudentNo(), reservationId);
     }
+
+    @GetMapping("/reservations/active")
+    public List<LibraryReservationResponse> activeReservationsForLibraryAdmin() {
+        return libraryReservationService.listActiveForLibraryAdmin(currentStudentNo());
+    }
+
+    @DeleteMapping("/reservations/{reservationId}/admin")
+    public LibraryReservationResponse cancelAsLibraryAdmin(@PathVariable Long reservationId) {
+        return libraryReservationService.cancelAsLibraryAdmin(currentStudentNo(), reservationId);
+    }
 }

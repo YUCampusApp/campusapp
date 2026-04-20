@@ -120,6 +120,8 @@ export type LibrarySectionStatusResponse = {
 
 export type LibraryReservationResponse = {
   id: number
+  studentName?: string
+  studentNo?: string
   sectionType: 'COMP' | 'GENERAL'
   startAt: string
   endAt: string
@@ -134,6 +136,18 @@ export type LibraryPolicyStatusResponse = {
   reservationBlocked: boolean
   blockedUntil: string | null
   message: string | null
+}
+
+export type HairdresserAppointmentResponse = {
+  id: number
+  studentName: string
+  studentNo: string
+  startAt: string
+  endAt: string
+  startLocal: string
+  endLocal: string
+  status: string
+  createdAt: string
 }
 
 export type ShuttleStopResponse = {

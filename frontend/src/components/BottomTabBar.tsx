@@ -5,9 +5,12 @@ import {
   Home,
   LibraryBig,
   MapPinned,
+  Scissors,
   User,
 } from 'lucide-react'
 import { NavLink, useLocation } from 'react-router-dom'
+import { useAuth } from '../auth/AuthContext'
+import { getServiceAdminRole, isServiceAdminUser } from '../auth/roleUtils'
 
 type TabItemProps = {
   to: string
@@ -31,7 +34,10 @@ function TabItem({ to, end, label, Icon, active }: TabItemProps) {
 }
 
 export function BottomTabBar() {
+  const { user } = useAuth()
   const { pathname } = useLocation()
+  const isServiceAdmin = isServiceAdminUser(user)
+  const serviceAdminRole = getServiceAdminRole(user)
 
   const homeActive =
     pathname === '/dashboard' ||
@@ -44,6 +50,26 @@ export function BottomTabBar() {
   const notesActive = pathname.includes('/lecture-notes')
   const shuttleActive = pathname.includes('/shuttle')
   const mapActive = pathname.includes('/campus-map')
+
+  if (pathname.includes('/library-management')) {
+    return (
+      <nav className="campus-tabbar">
+        <TabItem to="/dashboard" end label="Home" Icon={Home} active={homeActive} />
+        <TabItem to="/dashboard/library-management" end label="Library Admin" Icon={LibraryBig} active />
+        <TabItem to="/dashboard/profile" label="Profile" Icon={User} active={profileActive} />
+      </nav>
+    )
+  }
+
+  if (pathname.includes('/hairdresser-management')) {
+    return (
+      <nav className="campus-tabbar">
+        <TabItem to="/dashboard" end label="Home" Icon={Home} active={homeActive} />
+        <TabItem to="/dashboard/hairdresser-management" end label="Hairdresser Admin" Icon={Scissors} active />
+        <TabItem to="/dashboard/profile" label="Profile" Icon={User} active={profileActive} />
+      </nav>
+    )
+  }
 
   if (pathname.includes('/library')) {
     return (
@@ -95,7 +121,17 @@ export function BottomTabBar() {
     )
   }
 
-  return (
+  return isServiceAdmin ? (
+    <nav className="campus-tabbar">
+      <TabItem to="/dashboard" end label="Home" Icon={Home} active={homeActive} />
+      {serviceAdminRole === 'hairdresser' ? (
+        <TabItem to="/dashboard/hairdresser-management" label="Hairdresser Admin" Icon={Scissors} active={pathname.includes('/hairdresser-management')} />
+      ) : (
+        <TabItem to="/dashboard/library-management" label="Library Admin" Icon={LibraryBig} active={pathname.includes('/library-management')} />
+      )}
+      <TabItem to="/dashboard/profile" label="Profile" Icon={User} active={profileActive} />
+    </nav>
+  ) : (
     <nav className="campus-tabbar">
       <TabItem to="/dashboard" end label="Home" Icon={Home} active={homeActive} />
       <TabItem to="/dashboard/academic" label="Academic" Icon={GraduationCap} active={academicActive} />

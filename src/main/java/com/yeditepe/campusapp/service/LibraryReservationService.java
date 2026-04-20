@@ -9,6 +9,7 @@ import com.yeditepe.campusapp.repository.LibraryGeneralRepository;
 import com.yeditepe.campusapp.repository.LibraryReservationRepository;
 import com.yeditepe.campusapp.repository.LibrarySectionRepository;
 import com.yeditepe.campusapp.repository.StudentRepository;
+import com.yeditepe.campusapp.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Hibernate;
 import org.springframework.http.HttpStatus;
@@ -40,6 +41,7 @@ public class LibraryReservationService {
     private final LibraryCompRepository compRepository;
     private final LibraryGeneralRepository generalRepository;
     private final StudentRepository studentRepository;
+    private final UserRepository userRepository;
     private final LibraryReservationMaintenance reservationMaintenance;
 
     @Transactional(readOnly = true)
@@ -75,6 +77,17 @@ public class LibraryReservationService {
         sweepCompleted();
         Student student = requireStudent(studentNo);
         return reservationRepository.findByStudentOrderByStartAtDesc(student).stream()
+                .map(this::toDto)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<LibraryReservationResponse> listActiveForLibraryAdmin(String principal) {
+        sweepCompleted();
+        requireLibraryAdmin(principal);
+        return reservationRepository
+                .findByStatusAndEndAtAfterOrderByStartAtAsc(LibraryReservationStatus.ACTIVE, Instant.now())
+                .stream()
                 .map(this::toDto)
                 .toList();
     }
@@ -220,12 +233,44 @@ public class LibraryReservationService {
         return toDto(reservationRepository.save(r));
     }
 
+    @Transactional
+    public LibraryReservationResponse cancelAsLibraryAdmin(String principal, Long reservationId) {
+        sweepCompleted();
+        requireLibraryAdmin(principal);
+        LibraryReservation r = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Reservation not found."));
+        if (r.getStatus() == LibraryReservationStatus.CANCELLED) {
+            return toDto(r);
+        }
+        if (r.getStatus() == LibraryReservationStatus.COMPLETED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Completed reservations cannot be cancelled.");
+        }
+        r.setStatus(LibraryReservationStatus.CANCELLED);
+        return toDto(reservationRepository.save(r));
+    }
+
     private Student requireStudent(String studentNo) {
         Student s = studentRepository.findByStudentNo(studentNo);
         if (s == null) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only students can manage library reservations.");
         }
         return s;
+    }
+
+    private void requireLibraryAdmin(String principal) {
+        User user = resolvePrincipalUser(principal);
+        if (!(user instanceof Admin admin) || admin.getServiceRole() != AdminServiceRole.Library) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only library admins can access this endpoint.");
+        }
+    }
+
+    private User resolvePrincipalUser(String principal) {
+        Student byNo = studentRepository.findByStudentNo(principal);
+        if (byNo != null) return byNo;
+        Student byEmail = studentRepository.findByEmail(principal);
+        if (byEmail != null) return byEmail;
+        return userRepository.findByEmail(principal)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authenticated user not found."));
     }
 
     private LibrarySection resolveSection(LibrarySectionType type) {
@@ -243,6 +288,8 @@ public class LibraryReservationService {
         ZonedDateTime zs = r.getStartAt().atZone(ist);
         LibraryReservationResponse dto = new LibraryReservationResponse();
         dto.setId(r.getId());
+        dto.setStudentName(r.getStudent().getName());
+        dto.setStudentNo(r.getStudent().getStudentNo());
         dto.setSectionType(sectionTypeOf(r.getSection()));
         dto.setStartAt(r.getStartAt().toString());
         dto.setEndAt(r.getEndAt().toString());

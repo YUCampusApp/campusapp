@@ -46,6 +46,8 @@ public interface LibraryReservationRepository extends JpaRepository<LibraryReser
 
     List<LibraryReservation> findByStudentAndStatusInOrderByStartAtAsc(Student student, Collection<LibraryReservationStatus> statuses);
 
+    List<LibraryReservation> findByStatusAndEndAtAfterOrderByStartAtAsc(LibraryReservationStatus status, Instant now);
+
     @Query("""
             SELECT COUNT(r) FROM LibraryReservation r
             WHERE r.section.id = :sectionId

@@ -5,10 +5,10 @@ import {
   CloudSun,
   GraduationCap,
   LibraryBig,
+  Scissors,
   MapPinned,
   Puzzle,
   Coffee,
-  Scissors,
   ShoppingCart,
   PenTool
 } from 'lucide-react'
@@ -18,6 +18,8 @@ import { fetchJson } from '../lib/api'
 import { ScreenHeader } from '../components/ScreenHeader'
 import { ServiceModal, CafeteriaContent, HairdresserContent, MarketContent, StationeryContent } from '../components/ServiceModals'
 import type { DashboardResponse } from './types'
+import { useAuth } from '../auth/AuthContext'
+import { getServiceAdminRole, isServiceAdminUser } from '../auth/roleUtils'
 
 const modules: { to: string; label: string; Icon: React.ComponentType<{ size?: number; color?: string }>; tint: string }[] = [
   { to: '/dashboard/weather', label: 'Weather', Icon: CloudSun, tint: 'rgba(59, 89, 218, 0.12)' },
@@ -31,9 +33,12 @@ const modules: { to: string; label: string; Icon: React.ComponentType<{ size?: n
 ]
 
 export function HomeDashboardPage() {
+  const { user } = useAuth()
   const [data, setData] = useState<DashboardResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [activeModal, setActiveModal] = useState<'cafeteria' | 'hairdresser' | 'market' | 'stationery' | null>(null)
+  const serviceAdminRole = getServiceAdminRole(user)
+  const isServiceAdmin = isServiceAdminUser(user)
 
   useEffect(() => {
     fetchJson<DashboardResponse>('/api/dashboard/me')
@@ -67,6 +72,15 @@ export function HomeDashboardPage() {
     return m?.[1]?.split(/[,.]/)[0]?.trim() ?? 'Student'
   })()
 
+  const modulesToShow = isServiceAdmin
+    ? modules.filter((m) => !['/dashboard/academic', '/dashboard/schedule', '/dashboard/lecture-notes'].includes(m.to)).concat({
+        to: serviceAdminRole === 'hairdresser' ? '/dashboard/hairdresser-management' : '/dashboard/library-management',
+        label: serviceAdminRole === 'hairdresser' ? 'Hairdresser Admin' : 'Library Admin',
+        Icon: serviceAdminRole === 'hairdresser' ? Scissors : LibraryBig,
+        tint: serviceAdminRole === 'hairdresser' ? 'rgba(168, 85, 247, 0.18)' : 'rgba(22, 163, 74, 0.18)',
+      })
+    : modules
+
   return (
     <div>
       <ScreenHeader showBack={false} kicker="Yeditepe Campus" title={`Hello, ${hello}`} subtitle={`${data.currentDate} · ${data.currentTime}`} />
@@ -95,7 +109,7 @@ export function HomeDashboardPage() {
               gap: 12,
             }}
           >
-            {modules.map(({ to, label, Icon, tint }) => (
+            {modulesToShow.map(({ to, label, Icon, tint }) => (
               <Link
                 key={to}
                 to={to}
@@ -194,33 +208,35 @@ export function HomeDashboardPage() {
           </div>
         ) : null}
 
-        <div style={{ marginTop: 22 }}>
-          <h3 className="campus-section-title" style={{ marginBottom: 12 }}>
-            Today’s Classes
-          </h3>
-          {data.todaysClasses.length === 0 ? (
-            <div className="campus-card" style={{ color: 'var(--campus-text-muted)', fontWeight: 600 }}>
-              No classes today.
-            </div>
-          ) : (
-            <div className="campus-card" style={{ padding: 0, overflow: 'hidden' }}>
-              {data.todaysClasses.map((c, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    padding: '14px 16px',
-                    borderBottom: idx === data.todaysClasses.length - 1 ? 'none' : '1px solid var(--campus-border)',
-                  }}
-                >
-                  <div style={{ fontWeight: 800 }}>{c.courseName}</div>
-                  <div style={{ color: 'var(--campus-text-muted)', fontSize: 13, marginTop: 4 }}>
-                    {c.day} · {c.startTime}-{c.endTime} · {c.classroom}
+        {!isServiceAdmin ? (
+          <div style={{ marginTop: 22 }}>
+            <h3 className="campus-section-title" style={{ marginBottom: 12 }}>
+              Today’s Classes
+            </h3>
+            {data.todaysClasses.length === 0 ? (
+              <div className="campus-card" style={{ color: 'var(--campus-text-muted)', fontWeight: 600 }}>
+                No classes today.
+              </div>
+            ) : (
+              <div className="campus-card" style={{ padding: 0, overflow: 'hidden' }}>
+                {data.todaysClasses.map((c, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      padding: '14px 16px',
+                      borderBottom: idx === data.todaysClasses.length - 1 ? 'none' : '1px solid var(--campus-border)',
+                    }}
+                  >
+                    <div style={{ fontWeight: 800 }}>{c.courseName}</div>
+                    <div style={{ color: 'var(--campus-text-muted)', fontSize: 13, marginTop: 4 }}>
+                      {c.day} · {c.startTime}-{c.endTime} · {c.classroom}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : null}
 
         <div style={{ marginTop: 22 }}>
           <h3 className="campus-section-title" style={{ marginBottom: 12 }}>

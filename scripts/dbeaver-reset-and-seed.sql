@@ -1,13 +1,17 @@
 -- =============================================================================
 -- CampusApp – kullanıcı tablolarını sıfırla + demo seed (PostgreSQL / DBeaver)
 --
--- UYARI: students, instructors, admins, users + kütüphane rezervasyonları/bölümleri sıfırlanır.
+-- UYARI: students, instructors, admins, users + library/hairdresser rezervasyonları sıfırlanır.
 --        (DROP SCHEMA kullanmıyoruz; public şemadaki diğer tablolar kalır.)
 --
 -- Şifre: Password1!  |  Kütüphane admin: demo.admin.library@yeditepe.local
 -- Execute SQL Script (Ctrl+Alt+X).
 -- =============================================================================
 
+CREATE SCHEMA IF NOT EXISTS public;
+SET search_path TO public;
+
+TRUNCATE TABLE public.hairdresser_appointments RESTART IDENTITY CASCADE;
 TRUNCATE TABLE public.library_reservations RESTART IDENTITY CASCADE;
 TRUNCATE TABLE
   public.students,
@@ -78,6 +82,52 @@ INSERT INTO public.library_sections (total_seats, section_type) VALUES
   (30, 'COMP'),
   (80, 'GENERAL');
 
+-- Demo kütüphane rezervasyonları (aktif)
+INSERT INTO public.library_reservations (student_id, section_id, start_at, end_at, status, created_at)
+SELECT s.id,
+       sec.id,
+       NOW() + INTERVAL '30 minute',
+       NOW() + INTERVAL '2 hour',
+       'ACTIVE',
+       NOW()
+FROM public.students s
+JOIN public.users u ON u.id = s.id
+JOIN public.library_sections sec ON sec.section_type = 'COMP'
+WHERE u.email = 'demo.student1@yeditepe.local';
+
+INSERT INTO public.library_reservations (student_id, section_id, start_at, end_at, status, created_at)
+SELECT s.id,
+       sec.id,
+       NOW() + INTERVAL '90 minute',
+       NOW() + INTERVAL '3 hour',
+       'ACTIVE',
+       NOW()
+FROM public.students s
+JOIN public.users u ON u.id = s.id
+JOIN public.library_sections sec ON sec.section_type = 'GENERAL'
+WHERE u.email = 'demo.student2@yeditepe.local';
+
+-- Demo kuaför randevuları (aktif)
+INSERT INTO public.hairdresser_appointments (student_id, start_at, end_at, status, created_at)
+SELECT s.id,
+       NOW() + INTERVAL '20 minute',
+       NOW() + INTERVAL '65 minute',
+       'ACTIVE',
+       NOW()
+FROM public.students s
+JOIN public.users u ON u.id = s.id
+WHERE u.email = 'demo.student1@yeditepe.local';
+
+INSERT INTO public.hairdresser_appointments (student_id, start_at, end_at, status, created_at)
+SELECT s.id,
+       NOW() + INTERVAL '110 minute',
+       NOW() + INTERVAL '155 minute',
+       'ACTIVE',
+       NOW()
+FROM public.students s
+JOIN public.users u ON u.id = s.id
+WHERE u.email = 'demo.student2@yeditepe.local';
+
 DO $$
 DECLARE
   seq_name text;
@@ -86,6 +136,16 @@ BEGIN
   seq_name := pg_get_serial_sequence('public.library_sections', 'id');
   IF seq_name IS NOT NULL THEN
     SELECT COALESCE(MAX(id), 1) INTO max_id FROM public.library_sections;
+    PERFORM setval(seq_name::regclass, GREATEST(max_id, 1));
+  END IF;
+  seq_name := pg_get_serial_sequence('public.library_reservations', 'id');
+  IF seq_name IS NOT NULL THEN
+    SELECT COALESCE(MAX(id), 1) INTO max_id FROM public.library_reservations;
+    PERFORM setval(seq_name::regclass, GREATEST(max_id, 1));
+  END IF;
+  seq_name := pg_get_serial_sequence('public.hairdresser_appointments', 'id');
+  IF seq_name IS NOT NULL THEN
+    SELECT COALESCE(MAX(id), 1) INTO max_id FROM public.hairdresser_appointments;
     PERFORM setval(seq_name::regclass, GREATEST(max_id, 1));
   END IF;
 END $$;

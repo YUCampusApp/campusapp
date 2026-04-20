@@ -8,6 +8,8 @@ import java.time.Instant;
 @Data
 public class LibraryReservationResponse {
     private Long id;
+    private String studentName;
+    private String studentNo;
     private LibrarySectionType sectionType;
     /** ISO-8601 UTC anı */
     private String startAt;

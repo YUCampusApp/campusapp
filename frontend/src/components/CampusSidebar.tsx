@@ -5,6 +5,7 @@ import {
   CloudSun,
   GraduationCap,
   Home,
+  Scissors,
   LibraryBig,
   LogOut,
   MapPinned,
@@ -12,6 +13,7 @@ import {
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { getServiceAdminRole, isServiceAdminUser } from '../auth/roleUtils'
 
 function SideLink({
   to,
@@ -38,16 +40,20 @@ function SideLink({
 
 export function CampusSidebar({ onLogout }: { onLogout: () => void }) {
   const { user } = useAuth()
+  const isServiceAdmin = isServiceAdminUser(user)
+  const serviceAdminRole = getServiceAdminRole(user)
 
   return (
     <aside className="campus-sidebar">
       <div className="campus-sidebar__brand">Yeditepe Campus</div>
       <SideLink to="/dashboard" end label="Home" Icon={Home} />
       <SideLink to="/dashboard/weather" label="Weather" Icon={CloudSun} />
-      <SideLink to="/dashboard/academic" label="Academic" Icon={GraduationCap} />
-      <SideLink to="/dashboard/schedule" label="Course Combinator" Icon={Puzzle} />
+      {!isServiceAdmin ? <SideLink to="/dashboard/academic" label="Academic" Icon={GraduationCap} /> : null}
+      {!isServiceAdmin ? <SideLink to="/dashboard/schedule" label="Course Combinator" Icon={Puzzle} /> : null}
       <SideLink to="/dashboard/library" label="Library" Icon={LibraryBig} />
-      <SideLink to="/dashboard/lecture-notes" label="Notes" Icon={BookOpen} />
+      {!isServiceAdmin ? <SideLink to="/dashboard/lecture-notes" label="Notes" Icon={BookOpen} /> : null}
+      {serviceAdminRole === 'library' ? <SideLink to="/dashboard/library-management" label="Library Admin" Icon={LibraryBig} /> : null}
+      {serviceAdminRole === 'hairdresser' ? <SideLink to="/dashboard/hairdresser-management" label="Hairdresser Admin" Icon={Scissors} /> : null}
       <SideLink to="/dashboard/shuttle" label="Shuttle" Icon={Bus} />
       <SideLink to="/dashboard/campus-map" label="Campus Map" Icon={MapPinned} />
       <SideLink to="/dashboard/notifications" label="Notifications" Icon={Bell} />
